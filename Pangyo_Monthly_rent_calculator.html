@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>보증금 대비 월 임대료 계산기</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        input, button { margin: 5px; padding: 10px; font-size: 1rem; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid black; padding: 10px; text-align: center; }
+        canvas { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>보증금 대비 월 임대료 계산기</h1>
+    <button onclick="adjustDeposit(-100000000)">-1억원</button>
+    <button onclick="adjustDeposit(-10000000)">-1000만원</button>
+    <button onclick="adjustDeposit(-1000000)">-100만원</button>
+    <input type="number" id="deposit" value="174680000" readonly>
+    <button onclick="adjustDeposit(1000000)">+100만원</button>
+    <button onclick="adjustDeposit(10000000)">+1000만원</button>
+    <button onclick="adjustDeposit(100000000)">+1억원</button>
+    <h2>월 임대료: <span id="rent">742,390</span> 원</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>보증금</th>
+                <th>월 임대료</th>
+                <th>계산 과정</th>
+            </tr>
+        </thead>
+        <tbody id="rentTable"></tbody>
+    </table>
+    <canvas id="rentChart" width="400" height="200"></canvas>
+    <script>
+        const baseDeposit = 174680000;
+        const baseRent = 742390;
+        const minDeposit = 28680000;
+        const maxDeposit = 250680000;
+        const increaseRate = 0.07;
+        const decreaseRate = 0.035;
+        let chartInstance = null;
+
+        function adjustDeposit(amount) {
+            let deposit = parseInt(document.getElementById('deposit').value) + amount;
+            if (deposit < minDeposit || deposit > maxDeposit) return;
+            document.getElementById('deposit').value = deposit;
+            calculateRent(deposit);
+        }
+
+        function calculateRent(deposit) {
+            let rent = baseRent;
+            let process = '';
+            
+            if (deposit > baseDeposit) {
+                let extra = deposit - baseDeposit;
+                let discount = Math.floor((extra * increaseRate) / 12 / 10) * 10;
+                rent -= discount;
+                process = `초과 보증금: ${extra.toLocaleString()}원 → ${(increaseRate * 100).toFixed(1)}% 적용: ${Math.floor(extra * increaseRate).toLocaleString()}원 → 12개월 나누기: ${discount.toLocaleString()}원 감액`;
+            } else if (deposit < baseDeposit) {
+                let shortage = baseDeposit - deposit;
+                let increase = Math.floor((shortage * decreaseRate) / 12 / 10) * 10;
+                rent += increase;
+                process = `부족 보증금: ${shortage.toLocaleString()}원 → ${(decreaseRate * 100).toFixed(1)}% 적용: ${Math.floor(shortage * decreaseRate).toLocaleString()}원 → 12개월 나누기: ${increase.toLocaleString()}원 증액`;
+            }
+            
+            rent = Math.floor(rent / 10) * 10;
+            document.getElementById('rent').innerText = rent.toLocaleString();
+            updateTable(deposit, rent, process);
+            updateChart(deposit);
+        }
+
+        function updateTable(deposit, rent, process) {
+            let tableContent = '';
+            for (let d = deposit; d <= maxDeposit; d += 1000000) {
+                let r = baseRent;
+                let calcProcess = '';
+                if (d > baseDeposit) {
+                    let extra = d - baseDeposit;
+                    let discount = Math.floor((extra * increaseRate) / 12 / 10) * 10;
+                    r -= discount;
+                    calcProcess = `초과 ${extra.toLocaleString()}원 → ${(increaseRate * 100).toFixed(1)}% 적용 → ${Math.floor(extra * increaseRate).toLocaleString()}원 → ÷12 → ${discount.toLocaleString()}원 감액`;
+                } else if (d < baseDeposit) {
+                    let shortage = baseDeposit - d;
+                    let increase = Math.floor((shortage * decreaseRate) / 12 / 10) * 10;
+                    r += increase;
+                    calcProcess = `부족 ${shortage.toLocaleString()}원 → ${(decreaseRate * 100).toFixed(1)}% 적용 → ${Math.floor(shortage * decreaseRate).toLocaleString()}원 → ÷12 → ${increase.toLocaleString()}원 증액`;
+                }
+                r = Math.floor(r / 10) * 10;
+                tableContent += `<tr><td>${d.toLocaleString()} 원</td><td>${r.toLocaleString()} 원</td><td>${calcProcess}</td></tr>`;
+            }
+            document.getElementById('rentTable').innerHTML = tableContent;
+        }
+
+        function updateChart(startDeposit) {
+            let deposits = [];
+            let rents = [];
+            for (let d = startDeposit; d <= maxDeposit; d += 1000000) {
+                let r = baseRent;
+                if (d > baseDeposit) {
+                    let extra = d - baseDeposit;
+                    let discount = Math.floor((extra * increaseRate) / 12 / 10) * 10;
+                    r -= discount;
+                } else if (d < baseDeposit) {
+                    let shortage = baseDeposit - d;
+                    let increase = Math.floor((shortage * decreaseRate) / 12 / 10) * 10;
+                    r += increase;
+                }
+                r = Math.floor(r / 10) * 10;
+                deposits.push(d);
+                rents.push(r);
+            }
+            
+            let ctx = document.getElementById('rentChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: deposits.map(d => d.toLocaleString()),
+                    datasets: [{
+                        label: '월 임대료 변화',
+                        data: rents,
+                        borderColor: 'blue',
+                        borderWidth: 2,
+                        fill: false,
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+    </script>
+</body>
+</html>
