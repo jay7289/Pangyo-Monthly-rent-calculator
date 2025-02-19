@@ -15,6 +15,10 @@
 </head>
 <body>
     <h1>보증금 대비 월 임대료 계산기</h1>
+    <button onclick="setDeposit(28680000)">최소 보증금</button>
+    <button onclick="setDeposit(174680000)">기본 보증금</button>
+    <button onclick="setDeposit(250680000)">최대 보증금</button>
+    <br>
     <button onclick="adjustDeposit(-100000000)">-1억원</button>
     <button onclick="adjustDeposit(-10000000)">-1000만원</button>
     <button onclick="adjustDeposit(-1000000)">-100만원</button>
@@ -22,7 +26,13 @@
     <button onclick="adjustDeposit(1000000)">+100만원</button>
     <button onclick="adjustDeposit(10000000)">+1000만원</button>
     <button onclick="adjustDeposit(100000000)">+1억원</button>
+    <br>
+    <input type="checkbox" id="addInterest" onchange="calculateRent(parseInt(document.getElementById('deposit').value))">
+    <label for="addInterest">대출 이자 추가하기</label>
+    
     <h2>월 임대료: <span id="rent">742,390</span> 원</h2>
+    <h3 id="interestDisplay"></h3>
+    
     <table>
         <thead>
             <tr>
@@ -34,6 +44,7 @@
         <tbody id="rentTable"></tbody>
     </table>
     <canvas id="rentChart" width="400" height="200"></canvas>
+    
     <script>
         const baseDeposit = 174680000;
         const baseRent = 742390;
@@ -41,7 +52,13 @@
         const maxDeposit = 250680000;
         const increaseRate = 0.07;
         const decreaseRate = 0.035;
+        const interestAmount = 467500;
         let chartInstance = null;
+
+        function setDeposit(value) {
+            document.getElementById('deposit').value = value;
+            calculateRent(value);
+        }
 
         function adjustDeposit(amount) {
             let deposit = parseInt(document.getElementById('deposit').value) + amount;
@@ -53,82 +70,44 @@
         function calculateRent(deposit) {
             let rent = baseRent;
             let process = '';
+            let rentTableContent = '';
             
-            if (deposit > baseDeposit) {
-                let extra = deposit - baseDeposit;
-                let discount = Math.floor((extra * increaseRate) / 12);
-                rent -= discount;
-                process = `초과 보증금: ${extra.toLocaleString()}원 → ${(increaseRate * 100).toFixed(1)}% 적용: ${(extra * increaseRate).toLocaleString()}원 → 12개월 나누기: ${discount.toLocaleString()}원 감액`;
-            } else if (deposit < baseDeposit) {
-                let shortage = baseDeposit - deposit;
-                let increase = Math.floor((shortage * decreaseRate) / 12);
-                rent += increase;
-                process = `부족 보증금: ${shortage.toLocaleString()}원 → ${(decreaseRate * 100).toFixed(1)}% 적용: ${(shortage * decreaseRate).toLocaleString()}원 → 12개월 나누기: ${increase.toLocaleString()}원 증액`;
-            }
-            
-            rent = Math.floor(rent / 10) * 10;
-            document.getElementById('rent').innerText = rent.toLocaleString();
-            updateTable(deposit, rent, process);
-            updateChart(deposit);
-        }
-
-        function updateTable(deposit, rent, process) {
-            let tableContent = '';
             for (let d = deposit; d <= maxDeposit; d += 1000000) {
-                let r = baseRent;
-                let calcProcess = '';
+                let tempRent = baseRent;
+                let tempProcess = '';
+                
                 if (d > baseDeposit) {
                     let extra = d - baseDeposit;
-                    let discount = Math.floor((extra * increaseRate) / 12);
-                    r -= discount;
-                    calcProcess = `초과 ${extra.toLocaleString()}원 → ${(increaseRate * 100).toFixed(1)}% 적용 → ${(extra * increaseRate).toLocaleString()}원 → ÷12 → ${discount.toLocaleString()}원 감액`;
+                    let discount = (extra * increaseRate) / 12;
+                    tempProcess = `초과 보증금: ${extra.toLocaleString()}원 → ${(increaseRate * 100).toFixed(1)}% 적용: ${(extra * increaseRate).toLocaleString()}원 → 12개월 나누기: ${Math.floor(discount).toLocaleString()}원 감액`;
+                    tempRent -= Math.floor(discount);
                 } else if (d < baseDeposit) {
                     let shortage = baseDeposit - d;
-                    let increase = Math.floor((shortage * decreaseRate) / 12);
-                    r += increase;
-                    calcProcess = `부족 ${shortage.toLocaleString()}원 → ${(decreaseRate * 100).toFixed(1)}% 적용 → ${(shortage * decreaseRate).toLocaleString()}원 → ÷12 → ${increase.toLocaleString()}원 증액`;
+                    let increase = (shortage * decreaseRate) / 12;
+                    tempProcess = `부족 보증금: ${shortage.toLocaleString()}원 → ${(decreaseRate * 100).toFixed(1)}% 적용: ${(shortage * decreaseRate).toLocaleString()}원 → 12개월 나누기: ${Math.floor(increase).toLocaleString()}원 증액`;
+                    tempRent += Math.floor(increase);
                 }
-                r = Math.floor(r / 10) * 10;
-                tableContent += `<tr><td>${d.toLocaleString()} 원</td><td>${r.toLocaleString()} 원</td><td>${calcProcess}</td></tr>`;
-            }
-            document.getElementById('rentTable').innerHTML = tableContent;
-        }
-
-        function updateChart(startDeposit) {
-            let deposits = [];
-            let rents = [];
-            for (let d = startDeposit; d <= maxDeposit; d += 1000000) {
-                let r = baseRent;
-                if (d > baseDeposit) {
-                    let extra = d - baseDeposit;
-                    let discount = Math.floor((extra * increaseRate) / 12);
-                    r -= discount;
-                } else if (d < baseDeposit) {
-                    let shortage = baseDeposit - d;
-                    let increase = Math.floor((shortage * decreaseRate) / 12);
-                    r += increase;
+                
+                tempRent = Math.floor(tempRent / 10) * 10;
+                let totalRent = tempRent;
+                let interestText = '';
+                if (document.getElementById('addInterest').checked) {
+                    totalRent += interestAmount;
+                    interestText = `<br>${tempRent.toLocaleString()}원 + ${interestAmount.toLocaleString()}원 = ${totalRent.toLocaleString()}원`;
                 }
-                r = Math.floor(r / 10) * 10;
-                deposits.push(d);
-                rents.push(r);
+                
+                rentTableContent += `<tr><td>${d.toLocaleString()} 원</td><td>${tempRent.toLocaleString()} 원${interestText}</td><td>${tempProcess}</td></tr>`;
+                
+                if (d === deposit) {
+                    rent = tempRent;
+                    process = tempProcess;
+                }
             }
             
-            let ctx = document.getElementById('rentChart').getContext('2d');
-            if (chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: deposits.map(d => d.toLocaleString()),
-                    datasets: [{
-                        label: '월 임대료 변화',
-                        data: rents,
-                        borderColor: 'blue',
-                        borderWidth: 2,
-                        fill: false,
-                    }]
-                },
-                options: { responsive: true }
-            });
+            document.getElementById('rent').innerText = rent.toLocaleString();
+            document.getElementById('interestDisplay').innerHTML = document.getElementById('addInterest').checked ? `${rent.toLocaleString()}원 + ${interestAmount.toLocaleString()}원 = ${(rent + interestAmount).toLocaleString()}원` : '';
+            document.getElementById('rentTable').innerHTML = rentTableContent;
+            updateChart(deposit);
         }
     </script>
 </body>
