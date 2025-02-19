@@ -56,14 +56,14 @@
             
             if (deposit > baseDeposit) {
                 let extra = deposit - baseDeposit;
-                let discount = Math.floor((extra * increaseRate) / 12 / 10) * 10;
+                let discount = Math.floor((extra * increaseRate) / 12);
                 rent -= discount;
-                process = `초과 보증금: ${extra.toLocaleString()}원 → ${(increaseRate * 100).toFixed(1)}% 적용: ${Math.floor(extra * increaseRate).toLocaleString()}원 → 12개월 나누기: ${discount.toLocaleString()}원 감액`;
+                process = `초과 보증금: ${extra.toLocaleString()}원 → ${(increaseRate * 100).toFixed(1)}% 적용: ${(extra * increaseRate).toLocaleString()}원 → 12개월 나누기: ${discount.toLocaleString()}원 감액`;
             } else if (deposit < baseDeposit) {
                 let shortage = baseDeposit - deposit;
-                let increase = Math.floor((shortage * decreaseRate) / 12 / 10) * 10;
+                let increase = Math.floor((shortage * decreaseRate) / 12);
                 rent += increase;
-                process = `부족 보증금: ${shortage.toLocaleString()}원 → ${(decreaseRate * 100).toFixed(1)}% 적용: ${Math.floor(shortage * decreaseRate).toLocaleString()}원 → 12개월 나누기: ${increase.toLocaleString()}원 증액`;
+                process = `부족 보증금: ${shortage.toLocaleString()}원 → ${(decreaseRate * 100).toFixed(1)}% 적용: ${(shortage * decreaseRate).toLocaleString()}원 → 12개월 나누기: ${increase.toLocaleString()}원 증액`;
             }
             
             rent = Math.floor(rent / 10) * 10;
@@ -79,14 +79,14 @@
                 let calcProcess = '';
                 if (d > baseDeposit) {
                     let extra = d - baseDeposit;
-                    let discount = Math.floor((extra * increaseRate) / 12 / 10) * 10;
+                    let discount = Math.floor((extra * increaseRate) / 12);
                     r -= discount;
-                    calcProcess = `초과 ${extra.toLocaleString()}원 → ${(increaseRate * 100).toFixed(1)}% 적용 → ${Math.floor(extra * increaseRate).toLocaleString()}원 → ÷12 → ${discount.toLocaleString()}원 감액`;
+                    calcProcess = `초과 ${extra.toLocaleString()}원 → ${(increaseRate * 100).toFixed(1)}% 적용 → ${(extra * increaseRate).toLocaleString()}원 → ÷12 → ${discount.toLocaleString()}원 감액`;
                 } else if (d < baseDeposit) {
                     let shortage = baseDeposit - d;
-                    let increase = Math.floor((shortage * decreaseRate) / 12 / 10) * 10;
+                    let increase = Math.floor((shortage * decreaseRate) / 12);
                     r += increase;
-                    calcProcess = `부족 ${shortage.toLocaleString()}원 → ${(decreaseRate * 100).toFixed(1)}% 적용 → ${Math.floor(shortage * decreaseRate).toLocaleString()}원 → ÷12 → ${increase.toLocaleString()}원 증액`;
+                    calcProcess = `부족 ${shortage.toLocaleString()}원 → ${(decreaseRate * 100).toFixed(1)}% 적용 → ${(shortage * decreaseRate).toLocaleString()}원 → ÷12 → ${increase.toLocaleString()}원 증액`;
                 }
                 r = Math.floor(r / 10) * 10;
                 tableContent += `<tr><td>${d.toLocaleString()} 원</td><td>${r.toLocaleString()} 원</td><td>${calcProcess}</td></tr>`;
@@ -101,11 +101,11 @@
                 let r = baseRent;
                 if (d > baseDeposit) {
                     let extra = d - baseDeposit;
-                    let discount = Math.floor((extra * increaseRate) / 12 / 10) * 10;
+                    let discount = Math.floor((extra * increaseRate) / 12);
                     r -= discount;
                 } else if (d < baseDeposit) {
                     let shortage = baseDeposit - d;
-                    let increase = Math.floor((shortage * decreaseRate) / 12 / 10) * 10;
+                    let increase = Math.floor((shortage * decreaseRate) / 12);
                     r += increase;
                 }
                 r = Math.floor(r / 10) * 10;
